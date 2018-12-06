@@ -1,2 +1,2 @@
 all:
-	g++ -std=c++11 tarea2.cpp -o tarea2 -lGL -lGLU -lGLEW -lm -lglfw
+	g++ -std=c++11 tarea2.cpp -o tarea2 -lGL -lGLU -lGLEW -lm -lglfw -g

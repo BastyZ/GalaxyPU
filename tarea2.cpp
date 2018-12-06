@@ -91,11 +91,13 @@ int main( void )
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
+    // Enable points
+    glEnable(GL_PROGRAM_POINT_SIZE);
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
 
     // Cull triangles which normal is not towards the camera
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
 
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
@@ -216,7 +218,10 @@ int main( void )
 						(void*)0                          // array buffer offset
 				);
 
-        glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
+        glPointSize(10.f);
+        //glDrawElements(GL_POINTS, vertices.size(), GL_FLOAT, 0 );
+        //glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
+        glDrawArrays(GL_POINTS, 0, vertices.size() );
 
 				glDisableVertexAttribArray(0);
 				glDisableVertexAttribArray(1);

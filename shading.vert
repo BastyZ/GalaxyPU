@@ -22,7 +22,7 @@ void main(){
   posiciones = vertexPosition_modelspace;
 	// Output position of the vertex, in clip space : MVP * position
 	gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
-	gl_PointSize = 1.0;
+	gl_PointSize = 1000.0;
 
 	// Position of the vertex, in worldspace : M * position
 	Position_worldspace = (M * vec4(vertexPosition_modelspace,1)).xyz;

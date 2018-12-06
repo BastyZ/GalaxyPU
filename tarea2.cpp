@@ -93,6 +93,8 @@ int main( void )
     glEnable(GL_DEPTH_TEST);
     // Enable points
     glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
 
@@ -218,7 +220,6 @@ int main( void )
 						(void*)0                          // array buffer offset
 				);
 
-        glPointSize(10.f);
         //glDrawElements(GL_POINTS, vertices.size(), GL_FLOAT, 0 );
         //glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
         glDrawArrays(GL_POINTS, 0, vertices.size() );

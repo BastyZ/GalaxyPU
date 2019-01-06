@@ -71,6 +71,7 @@ fabric.properties
 *.obj
 .idea/
 .idea*
+tarea2
 core
 # Precompiled Headers
 *.gch

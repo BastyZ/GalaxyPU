@@ -118,7 +118,7 @@ int main( void )
     std::vector<glm::vec3> normals; // Won't be used at the moment.
     std::vector<glm::vec2> lightradious;
 		//Se anade una linea para los vertices modificados
-    bool res = loadOBJ("cc2.csv", vertices,lightradious);
+    bool res = loadOBJ("cc3.csv", vertices,lightradious);
 
     // Load it into a VBO
 
@@ -272,13 +272,11 @@ bool loadOBJ(
 
         char lineHeader[300];
         // read the first word of the line
-        printf("Reading CSV line %s...\n", path);
         int res = fscanf(file, "%s", lineHeader);
         if (res == EOF) break; // EOF = End Of File. Quit the loop.
 
         glm::vec3 vertex;
         glm::vec2 luz_y_radio;
-        printf("   Start scanning...\n");
         fscanf(file, "%f,%f,%f,%f,%f\n", &vertex.x, &vertex.y, &vertex.z, &luz_y_radio.x, &luz_y_radio.y );
         out_vertices.push_back(vertex);
         luces_y_radios.push_back(luz_y_radio);

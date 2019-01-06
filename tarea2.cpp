@@ -118,7 +118,7 @@ int main( void )
     std::vector<glm::vec3> normals; // Won't be used at the moment.
     std::vector<glm::vec2> lightradious;
 		//Se anade una linea para los vertices modificados
-    bool res = loadOBJ("cerrito.obj", vertices,lightradious);
+    bool res = loadOBJ("cc2.csv", vertices,lightradious);
 
     // Load it into a VBO
 

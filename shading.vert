@@ -35,7 +35,7 @@ void main(){
 	// We set up the size of the star according to the distance to the camera
 	// distance is created using radious/distance²
 	float distance = length( vertexPosition_cameraspace - Position_worldspace );
-	gl_PointSize = vertexLightRadious.y*1000000;
+	gl_PointSize = 10000/distance;
 
 	// Vector that goes from the vertex to the light, in camera space. M is ommited because it's identity.
 	vec3 LightPosition_cameraspace = ( V * vec4(LightPosition_worldspace,1)).xyz;

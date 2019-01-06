@@ -69,7 +69,9 @@ fabric.properties
 *.lo
 *.o
 *.obj
-
+.idea/
+.idea*
+core
 # Precompiled Headers
 *.gch
 *.pch

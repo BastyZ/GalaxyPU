@@ -32,7 +32,7 @@ GLFWwindow* window;
 glm::mat4 ViewMatrix;
 glm::mat4 ProjectionMatrix;
 // Initial position : on +Z
-glm::vec3 position = glm::vec3( 6, 6, 6 );
+glm::vec3 position = glm::vec3( 2, 2, 1 );
 // Initial horizontal angle : toward -Z
 float horizontalAngle = 3.14f;
 // Initial vertical angle : none
@@ -60,7 +60,7 @@ int main( void )
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Open a window and create its OpenGL context
-    window = glfwCreateWindow( 1024, 768, "El cerrito mas bacan de todos.", NULL, NULL);
+    window = glfwCreateWindow( 1024, 768, "La Galaxia más bacan de todas.", NULL, NULL);
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
         getchar();
@@ -113,11 +113,12 @@ int main( void )
 
     // Read our .obj file
     std::vector<glm::vec3> vertices;
-		std::vector<glm::vec2> verticesRaros;
+    std::vector<glm::vec2> verticesRaros;
     std::vector<glm::vec2> uvs;
     std::vector<glm::vec3> normals; // Won't be used at the moment.
+    std::vector<glm::vec2> lightradious;
 		//Se anade una linea para los vertices modificados
-    bool res = loadOBJ("coordenadas.csv", vertices,verticesRaros);
+    bool res = loadOBJ("cerrito.obj", vertices,lightradious);
 
     // Load it into a VBO
 
@@ -126,25 +127,26 @@ int main( void )
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
 
-		GLuint vertexbuffer2;
-    glGenBuffers(1, &vertexbuffer2);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer2);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &verticesRaros[0], GL_STATIC_DRAW);
-
     GLuint uvbuffer;
     glGenBuffers(1, &uvbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
 
-		GLuint normalbuffer;
-		glGenBuffers(1, &normalbuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-		glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
+    GLuint normalbuffer;
+    glGenBuffers(1, &normalbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
 
-		glUseProgram(programID);
-		GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
-		//Flag de modelo
-		int flag = 1;
+    GLuint lightradiousbuffer;
+    glGenBuffers(1, &lightradiousbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, lightradiousbuffer);
+    glBufferData(GL_ARRAY_BUFFER, lightradious.size() * sizeof(glm::vec2), &lightradious[0], GL_STATIC_DRAW);
+
+    glUseProgram(programID);
+    GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
+    //Flag de modelo
+    int flag = 1;
+
     do{
 
         // Clear the screen
@@ -172,19 +174,7 @@ int main( void )
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
-				if (glfwGetKey( window, GLFW_KEY_1 ) == GLFW_PRESS){
-						flag = 1;
-				}
-				if (glfwGetKey( window, GLFW_KEY_2 ) == GLFW_PRESS){
-						flag = 0;
-				}
-				if(flag==1){
-		    	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-				}
-		    else{
-        	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer2);
-				}
-
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
         glVertexAttribPointer(
             0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
             3,                  // size
@@ -206,17 +196,29 @@ int main( void )
             (void*)0                          // array buffer offset
         );
 
-				// 3rd attribute buffer : normals
-				glEnableVertexAttribArray(2);
-				glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-				glVertexAttribPointer(
-						2,                                // attribute
-						3,                                // size
-						GL_FLOAT,                         // type
-						GL_FALSE,                         // normalized?
-						0,                                // stride
-						(void*)0                          // array buffer offset
-				);
+        // 3rd attribute buffer : normals
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+        glVertexAttribPointer(
+                2,                                // attribute
+                3,                                // size
+                GL_FLOAT,                         // type
+                GL_FALSE,                         // normalized?
+                0,                                // stride
+                (void*)0                          // array buffer offset
+        );
+
+        // 4rd attribute buffer : Light and Radious
+        glEnableVertexAttribArray(3);
+        glBindBuffer(GL_ARRAY_BUFFER, lightradiousbuffer);
+        glVertexAttribPointer(
+                3,                                // attribute
+                1,                                // size
+                GL_FLOAT,                         // type
+                GL_FALSE,                         // normalized?
+                0,                                // stride
+                (void*)0                          // array buffer offset
+        );
 
         //glDrawElements(GL_POINTS, vertices.size(), GL_FLOAT, 0 );
         //glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
@@ -274,17 +276,12 @@ bool loadOBJ(
         int res = fscanf(file, "%s", lineHeader);
         if (res == EOF) break; // EOF = End Of File. Quit the loop.
 
-        printf("Making vectors...\n");
         glm::vec3 vertex;
         glm::vec2 luz_y_radio;
         printf("   Start scanning...\n");
         fscanf(file, "%f,%f,%f,%f,%f\n", &vertex.x, &vertex.y, &vertex.z, &luz_y_radio.x, &luz_y_radio.y );
-        printf("   Lo leido es: %f\n", vertex.x);
-        printf("   End scanning...\n");
         out_vertices.push_back(vertex);
-        printf("      First PushBack...\n");
         luces_y_radios.push_back(luz_y_radio);
-        printf("      Second PushBack...\n");
 
     }
     fclose(file);

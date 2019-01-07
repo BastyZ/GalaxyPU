@@ -13,6 +13,8 @@ out vec3 Normal_cameraspace;
 out vec3 EyeDirection_cameraspace;
 out vec3 LightDirection_cameraspace;
 out vec3 posiciones;
+out vec2 LightRadious;
+out float distance;
 // Values that stay constant for the whole mesh.
 uniform mat4 MVP;
 uniform mat4 V;
@@ -34,12 +36,13 @@ void main(){
 
 	// We set up the size of the star according to the distance to the camera
 	// distance is created using radious/distance²
-	float distance = length( vertexPosition_cameraspace - Position_worldspace );
-	gl_PointSize = 100/(distance*distance);
+	distance = length( vertexPosition_cameraspace);
+	gl_PointSize = (vertexLightRadious.y)/(distance*distance);
 
 	// Vector that goes from the vertex to the light, in camera space. M is ommited because it's identity.
 	vec3 LightPosition_cameraspace = ( V * vec4(LightPosition_worldspace,1)).xyz;
 	LightDirection_cameraspace = LightPosition_cameraspace + EyeDirection_cameraspace;
+	LightRadious = vertexLightRadious;
 
 	// Normal of the the vertex, in camera space
 	Normal_cameraspace = ( V * M * vec4(vertexNormal_modelspace,0)).xyz; // Only correct if ModelMatrix does not scale the model ! Use its inverse transpose if not.

@@ -16,6 +16,11 @@ using namespace glm;
 #include <sstream>
 #include <math.h>       /* cos,sin,atan*/
 
+GLuint loadDDS(const char * imagepath);
+#define FOURCC_DXT1 0x31545844 // Equivalent to "DXT1" in ASCII
+#define FOURCC_DXT3 0x33545844 // Equivalent to "DXT3" in ASCII
+#define FOURCC_DXT5 0x35545844 // Equivalent to "DXT5" in ASCII
+
 //FUNCIONES AUXILIARES OBTENIDAS DEL TUTORIAL Y DEFINIDAS AL FINAL
 
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path);
@@ -40,7 +45,7 @@ float verticalAngle = 0.0f;
 // Initial Field of View
 float initialFoV = 45.0f;
 
-float speed = 3.0f; // 3 units / second
+float speed = 90.0f; // 3 units / second
 float mouseSpeed = 0.0005f;
 
 int main( void )
@@ -117,7 +122,9 @@ int main( void )
     std::vector<glm::vec2> uvs;
     std::vector<glm::vec3> normals; // Won't be used at the moment.
     std::vector<glm::vec2> lightradious;
-		//Se anade una linea para los vertices modificados
+    //Se anade una linea para los vertices modificados
+    GLuint Texture = loadDDS("uvtemplate.DDS");
+    GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
     bool res = loadOBJ("cc3.csv", vertices,lightradious);
 
     // Load it into a VBO
@@ -163,14 +170,17 @@ int main( void )
 
         glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
-				// Send our transformation to the currently bound shader,
-				// in the "MVP" uniform
-				glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-				glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-				glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
-				glm::vec3 lightPos = glm::vec3(6,6,6);
-				glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
+        // Send our transformation to the currently bound shader,
+        // in the "MVP" uniform
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+        glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+        glm::vec3 lightPos = glm::vec3(6,6,6);
+        glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture);
+        glUniform1i(TextureID, 0);
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
@@ -213,7 +223,7 @@ int main( void )
         glBindBuffer(GL_ARRAY_BUFFER, lightradiousbuffer);
         glVertexAttribPointer(
                 3,                                // attribute
-                1,                                // size
+                2,                                // size
                 GL_FLOAT,                         // type
                 GL_FALSE,                         // normalized?
                 0,                                // stride
@@ -241,6 +251,7 @@ int main( void )
 			glDeleteBuffers(1, &uvbuffer);
 			glDeleteBuffers(1, &normalbuffer);
 			glDeleteProgram(programID);
+			glDeleteTextures(1, &Texture);
 			glDeleteVertexArrays(1, &VertexArrayID);
 
 			// Close OpenGL window and terminate GLFW
@@ -386,11 +397,11 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
 	glDeleteShader(VertexShaderID);
 	glDeleteShader(FragmentShaderID);
 	printf("\n");
-	printf("[↑] +zoom\n");
-	printf("[↓] -zoom\n");
-	printf("[←|→] moverse\n");
-	printf("1 Modelo normal\n");
-	printf("2 Modelo aplicado arctan\n");
+	printf("[W] +zoom\n");
+	printf("[S] -zoom\n");
+	printf("[A|D] moverse\n");
+	printf("E Más rápido\n");
+	printf("Q Más lento\n");
 	printf("running...\n");fflush(stdout);
 	return ProgramID;
 }
@@ -433,26 +444,37 @@ void computeMatricesFromInputs(){
     glm::vec3 up = glm::cross( right, direction );
 
     // Move forward
-    if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
+    if (glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS){
         position += direction * deltaTime * speed;
     }
     // Move backward
-    if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS){
+    if (glfwGetKey( window, GLFW_KEY_S ) == GLFW_PRESS){
         position -= direction * deltaTime * speed;
     }
     // Strafe right
-    if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS){
+    if (glfwGetKey( window, GLFW_KEY_D ) == GLFW_PRESS){
         position += right * deltaTime * speed;
     }
     // Strafe left
-    if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS){
+    if (glfwGetKey( window, GLFW_KEY_A ) == GLFW_PRESS){
         position -= right * deltaTime * speed;
+    }
+    // go faster
+    if (glfwGetKey( window, GLFW_KEY_E ) == GLFW_PRESS){
+        speed = speed + 50;
+    }
+    // go slower
+    if (glfwGetKey( window, GLFW_KEY_Q ) == GLFW_PRESS){
+        speed = speed - 50;
+    }
+    if (speed <= 0 ) {
+        speed = 10;
     }
 
     float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
 
     // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-    ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
+    ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100000.0f);
     // Camera matrix
     ViewMatrix       = glm::lookAt(
                                 position,           // Camera is here
@@ -462,4 +484,94 @@ void computeMatricesFromInputs(){
 
     // For the next frame, the "last time" will be "now"
     lastTime = currentTime;
+}
+
+GLuint loadDDS(const char * imagepath) {
+
+    unsigned char header[124];
+
+    FILE *fp;
+
+    /* try to open the file */
+    fp = fopen(imagepath, "rb");
+    if (fp == NULL) {
+        printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", imagepath);
+        getchar();
+        return 0;
+    }
+
+    /* verify the type of file */
+    char filecode[4];
+    fread(filecode, 1, 4, fp);
+    if (strncmp(filecode, "DDS ", 4) != 0) {
+        fclose(fp);
+        return 0;
+    }
+
+    /* get the surface desc */
+    fread(&header, 124, 1, fp);
+
+    unsigned int height = *(unsigned int *) &(header[8]);
+    unsigned int width = *(unsigned int *) &(header[12]);
+    unsigned int linearSize = *(unsigned int *) &(header[16]);
+    unsigned int mipMapCount = *(unsigned int *) &(header[24]);
+    unsigned int fourCC = *(unsigned int *) &(header[80]);
+
+
+    unsigned char *buffer;
+    unsigned int bufsize;
+    /* how big is it going to be including all mipmaps? */
+    bufsize = mipMapCount > 1 ? linearSize * 2 : linearSize;
+    buffer = (unsigned char *) malloc(bufsize * sizeof(unsigned char));
+    fread(buffer, 1, bufsize, fp);
+    /* close the file pointer */
+    fclose(fp);
+
+    unsigned int components = (fourCC == FOURCC_DXT1) ? 3 : 4;
+    unsigned int format;
+    switch (fourCC) {
+        case FOURCC_DXT1:
+            format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+            break;
+        case FOURCC_DXT3:
+            format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+            break;
+        case FOURCC_DXT5:
+            format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+            break;
+        default:
+            free(buffer);
+            return 0;
+    }
+
+    // Create one OpenGL texture
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+
+    // "Bind" the newly created texture : all future texture functions will modify this texture
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    unsigned int blockSize = (format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ? 8 : 16;
+    unsigned int offset = 0;
+
+    /* load the mipmaps */
+    for (unsigned int level = 0; level < mipMapCount && (width || height); ++level) {
+        unsigned int size = ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
+        glCompressedTexImage2D(GL_TEXTURE_2D, level, format, width, height,
+                               0, size, buffer + offset);
+
+        offset += size;
+        width /= 2;
+        height /= 2;
+
+        // Deal with Non-Power-Of-Two textures. This code is not included in the webpage to reduce clutter.
+        if (width < 1) width = 1;
+        if (height < 1) height = 1;
+
+    }
+
+    free(buffer);
+
+    return textureID;
 }

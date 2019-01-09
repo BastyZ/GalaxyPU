@@ -26,7 +26,8 @@ GLuint loadDDS(const char * imagepath);
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path);
 bool loadOBJ(    const char * path,
     std::vector<glm::vec3> & out_vertices,
-		std::vector<glm::vec2> & luces_y_radios);
+		std::vector<glm::vec2> & luces_y_radios,
+  std::vector<glm::vec3> & rgb_data);
 void computeMatricesFromInputs();
 glm::mat4 getViewMatrix();
 glm::mat4 getProjectionMatrix();
@@ -122,10 +123,12 @@ int main( void )
     std::vector<glm::vec2> uvs;
     std::vector<glm::vec3> normals; // Won't be used at the moment.
     std::vector<glm::vec2> lightradious;
+    std::vector<glm::vec3> rgb_data;
+
     //Se anade una linea para los vertices modificados
     GLuint Texture = loadDDS("uvtemplate.DDS");
     GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
-    bool res = loadOBJ("cc3.csv", vertices,lightradious);
+    bool res = loadOBJ("gaia_fullv5.csv", vertices,lightradious,rgb_data);
 
     // Load it into a VBO
 
@@ -149,7 +152,12 @@ int main( void )
     glBindBuffer(GL_ARRAY_BUFFER, lightradiousbuffer);
     glBufferData(GL_ARRAY_BUFFER, lightradious.size() * sizeof(glm::vec2), &lightradious[0], GL_STATIC_DRAW);
 
+    GLuint rgb_databuffer;
+    glGenBuffers(1, &rgb_databuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, rgb_databuffer);
+    glBufferData(GL_ARRAY_BUFFER, rgb_data.size() * sizeof(glm::vec3), &rgb_data[0], GL_STATIC_DRAW);
     glUseProgram(programID);
+
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
     //Flag de modelo
     int flag = 1;
@@ -230,6 +238,16 @@ int main( void )
                 (void*)0                          // array buffer offset
         );
 
+        glEnableVertexAttribArray(4);
+        glBindBuffer(GL_ARRAY_BUFFER, rgb_databuffer);
+        glVertexAttribPointer(
+                4,                                // attribute
+                3,                                // size
+                GL_FLOAT,                         // type
+                GL_FALSE,                         // normalized?
+                0,                                // stride
+                (void*)0                          // array buffer offset
+        );
         //glDrawElements(GL_POINTS, vertices.size(), GL_FLOAT, 0 );
         //glDrawArrays(GL_TRIANGLES, 0, vertices.size() );
         glDrawArrays(GL_POINTS, 0, vertices.size() );
@@ -237,7 +255,8 @@ int main( void )
 				glDisableVertexAttribArray(0);
 				glDisableVertexAttribArray(1);
 				glDisableVertexAttribArray(2);
-
+        glDisableVertexAttribArray(3);
+        glDisableVertexAttribArray(4);
 				// Swap buffers
 				glfwSwapBuffers(window);
 				glfwPollEvents();
@@ -250,6 +269,7 @@ int main( void )
 			glDeleteBuffers(1, &vertexbuffer);
 			glDeleteBuffers(1, &uvbuffer);
 			glDeleteBuffers(1, &normalbuffer);
+      glDeleteBuffers(1, &rgb_databuffer);
 			glDeleteProgram(programID);
 			glDeleteTextures(1, &Texture);
 			glDeleteVertexArrays(1, &VertexArrayID);
@@ -260,14 +280,12 @@ int main( void )
 			return 0;
 }
 
-// FUNCIONES AUXILIARES OBTENIDAS DEL TUTORIAL
-// FUNCIONES AUXILIARES OBTENIDAS DEL TUTORIAL
-// FUNCIONES AUXILIARES OBTENIDAS DEL TUTORIAL
 
 bool loadOBJ(
     const char * path,
     std::vector<glm::vec3> & out_vertices,
-	std::vector<glm::vec2> & luces_y_radios
+	std::vector<glm::vec2> & luces_y_radios,
+  std::vector<glm::vec3> & rgb_data
 ){
     printf("Loading CSV file %s...\n", path);
 
@@ -288,7 +306,9 @@ bool loadOBJ(
 
         glm::vec3 vertex;
         glm::vec2 luz_y_radio;
-        fscanf(file, "%f,%f,%f,%f,%f\n", &vertex.x, &vertex.y, &vertex.z, &luz_y_radio.x, &luz_y_radio.y );
+        glm::vec3 rgb;
+        fscanf(file, "%f,%f,%f,%f,%f,%f,%f,%f\n", &vertex.x, &vertex.y, &vertex.z, &luz_y_radio.x, &luz_y_radio.y,&rgb.x,&rgb.y,&rgb.z );
+        rgb_data.push_back(rgb);
         out_vertices.push_back(vertex);
         luces_y_radios.push_back(luz_y_radio);
 

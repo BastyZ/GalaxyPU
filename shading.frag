@@ -17,8 +17,7 @@ in vec3 posiciones;
 uniform sampler2D myTextureSampler;
 
 void main(){
-    float a = LightRadious.x;
-    //color = vec4(a,a,a,a)/vec4(distance/2000,distance/2000,distance/2000,1);
-    color = texture( myTextureSampler, gl_PointCoord)*vec4(colorote,1);
+    float a = LightRadious.x/10;
+    color = texture( myTextureSampler, gl_PointCoord).rgba*vec4(colorote,1)/vec4(255,255,255,1);
     if(color.a==0.0) discard;
 }

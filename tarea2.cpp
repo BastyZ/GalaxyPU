@@ -128,7 +128,7 @@ int main( void )
     //Se anade una linea para los vertices modificados
     GLuint Texture = loadDDS("uvtemplate.DDS");
     GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
-    bool res = loadOBJ("gaia_fullv5.csv", vertices,lightradious,rgb_data);
+    bool res = loadOBJ("gaia_final.csv", vertices,lightradious,rgb_data);
 
     // Load it into a VBO
 
